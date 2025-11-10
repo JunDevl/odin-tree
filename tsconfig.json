@@ -1,0 +1,18 @@
+{
+	"compilerOptions": {
+		"module": "node16",
+		"noImplicitAny": true,
+		"removeComments": true,
+		"preserveConstEnums": true,
+		"sourceMap": true,
+		"jsx": "react",
+		"allowJs": false,
+		"moduleResolution": "node16",
+		"resolveJsonModule": true,
+		"allowSyntheticDefaultImports": true,
+		"strict": true,
+    "outDir": "build",
+		"target": "es2022",
+		"lib": ["ES5", "ES6", "DOM", "DOM.Iterable"],
+	},
+}
