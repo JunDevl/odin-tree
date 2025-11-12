@@ -8,10 +8,10 @@ export interface TreeNode {
 }
 
 export class BinarySearchTree {
-  root: TreeNode;
+  root: TreeNode | null;
 
   constructor(sortedValues: number[]) {
-    this.root = this.#generateTree(sortedValues, 0, sortedValues.length - 1) as TreeNode;
+    this.root = this.#generateTree(sortedValues, 0, sortedValues.length - 1);
   }
 
   #generateTree(sortedArray: number[], start_i: number, end_i: number) {
@@ -29,7 +29,7 @@ export class BinarySearchTree {
     return root;
   }
 
-  #orderLevelSearch(node: TreeNode | undefined, queue?: Queue<TreeNode>, value?: number, callback?: (node: TreeNode) => void): TreeNode | undefined {
+  #orderLevelSearch(node: TreeNode | undefined | null, queue?: Queue<TreeNode>, value?: number, callback?: (node: TreeNode) => void): TreeNode | undefined {
     if (!node) return undefined;
 
     if (value && node.data === value) {
@@ -50,7 +50,7 @@ export class BinarySearchTree {
     return this.#orderLevelSearch(queue.first.data, queue, value, callback);
   }
 
-  #depthFirstSearch(kind: "preorder" | "inorder" | "postorder", node: TreeNode | undefined, value?: number, callback?: (node: TreeNode) => void): TreeNode | undefined {
+  #depthFirstSearch(kind: "preorder" | "inorder" | "postorder", node: TreeNode | undefined | null, value?: number, callback?: (node: TreeNode) => void): TreeNode | undefined {
     if (!node) return undefined;
 
     switch (kind) {
@@ -132,10 +132,14 @@ export class BinarySearchTree {
       return node
     };
 
-    return value < node.data ? this.#binarySearch(value, node.left) : this.#binarySearch(value, node.right);
+    if (callback) callback(node);
+
+    return value < node.data ? this.#binarySearch(value, node.left, callback) : this.#binarySearch(value, node.right, callback);
   }
 
-  #parentBinarySearch(value: number, node: TreeNode): TreeNode | undefined {
+  #parentBinarySearch(value: number, node: TreeNode | undefined | null): TreeNode | undefined {
+    if (!node) return;
+
     if (node.data === value) return node;
 
     if ((value < node.data && !node.left) ||
@@ -164,7 +168,9 @@ export class BinarySearchTree {
   };
 
   insert(value: number): void {
-    const parent = this.#parentBinarySearch(value, this.root) as TreeNode;
+    const parent = this.#parentBinarySearch(value, this.root);
+
+    if (!parent) return;
 
     if (parent.data === value) return;
     if (parent.data > value) parent.left = {
@@ -225,12 +231,62 @@ export class BinarySearchTree {
     if (!node.right) return node;
     return this.max(node.right);
   }
+
+  height(node: TreeNode | undefined | null): number {
+    if (!node) return 0;
+
+    const leftHeight = this.height(node.left);
+    const rightHeight = this.height(node.right);
+
+    return 1 + Math.max(leftHeight, rightHeight);
+  }
+
+  depth(node: TreeNode | undefined, count?: number): number {
+    let currentCount = count ? count : 0
+
+    if (!node) return 0;
+
+    if (node.root) 
+      return this.depth(node.root, (currentCount + 1));
+    else 
+      return currentCount;
+  }
+
+  isBalanced(): boolean {
+    let balanced = true;
+    const checkNodeHeight = (node: TreeNode) => {
+      const leftHeight = this.height(node.left);
+      const rightHeight = this.height(node.right);
+
+      balanced = Math.abs(leftHeight - rightHeight) <= 1 && balanced;
+    }
+
+    this.depthFirstForEach(checkNodeHeight, "inorder");
+
+    return balanced;
+  }
+
+  rebalance(): void {
+    let sorted: number[] = [];
+
+    const pushToArray = (node: TreeNode) => {
+      sorted.push(node.data);
+    }
+    this.depthFirstForEach(pushToArray, "inorder");
+
+    this.root = this.#generateTree(sorted, 0, sorted.length - 1);
+  }
 }
 
 const bst = new BinarySearchTree([3, 6, 7, 9, 10, 13, 14, 20, 22, 23, 25, 30, 32, 35, 36]);
 
+bst.insert(90);
+bst.insert(100);
 bst.print();
-bst.remove(20);
-bst.print();
-bst.depthFirstForEach((node: TreeNode) => console.log(node.data), "inorder");
-bst.orderLevelForEeach((node: TreeNode) => console.log(node.data));
+console.log("\n");
+console.log(bst.isBalanced());
+
+if (!bst.isBalanced()) {
+  bst.rebalance();
+  bst.print();
+}
